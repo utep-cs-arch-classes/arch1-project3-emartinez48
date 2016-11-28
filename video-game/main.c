@@ -7,12 +7,14 @@
  *  is turned off along with the green LED.
  */
 #include <msp430.h>
+#include <stdjp.h>
 #include <libTimer.h>
 #include <lcdutils.h>
 #include <lcddraw.h>
-#include <p2switches.h>
 #include <shape.h>
-#include <abCircle.h>
+#include <buzzer.h>
+#include <rand.h>
+#include "switches.h"
 
 #define GREEN_LED BIT6
 
@@ -33,38 +35,20 @@ Layer layer4 = {
   0
 };
 
-
-Layer layer3 = {		/**< Layer with an orange circle */
-  (AbShape *)&circle8,
-  {(screenWidth/2)+10, (screenHeight/2)+5}, /**< bit below & right of center */
-  {0,0}, {0,0},				    /* last & next pos */
-  COLOR_VIOLET,
-  &layer4,
-};
-
-
 Layer fieldLayer = {		/* playing field as a layer */
   (AbShape *) &fieldOutline,
   {screenWidth/2, screenHeight/2},/**< center */
   {0,0}, {0,0},				    /* last & next pos */
   COLOR_BLACK,
-  &layer3
+  &layer4
 };
 
-Layer layer1 = {		/**< Layer with a red square */
+Layer layer0 = {		/**< Layer with a red square */
   (AbShape *)&rect10,
   {screenWidth/2, screenHeight/2}, /**< center */
   {0,0}, {0,0},				    /* last & next pos */
   COLOR_RED,
   &fieldLayer,
-};
-
-Layer layer0 = {		/**< Layer with an orange circle */
-  (AbShape *)&circle14,
-  {(screenWidth/2)+10, (screenHeight/2)+5}, /**< bit below & right of center */
-  {0,0}, {0,0},				    /* last & next pos */
-  COLOR_ORANGE,
-  &layer1,
 };
 
 /** Moving Layer
@@ -78,9 +62,7 @@ typedef struct MovLayer_s {
 } MovLayer;
 
 /* initial value of {0,0} will be overwritten */
-MovLayer ml3 = { &layer3, {1,1}, 0 }; /**< not all layers move */
-MovLayer ml1 = { &layer1, {1,2}, &ml3 };
-MovLayer ml0 = { &layer0, {2,1}, &ml1 };
+MovLayer ml0 = { &layer0, {2,1}, 0 };
 
 
 
@@ -170,10 +152,9 @@ void main()
 
   configureClocks();
   lcd_init();
-  shapeInit();
-  p2sw_init(1);
-
-  shapeInit();
+  sw_init();
+  buzzer_init();
+  rand_init();
 
   layerInit(&layer0);
   layerDraw(&layer0);
@@ -205,7 +186,7 @@ void wdt_c_handler()
   count ++;
   if (count == 15) {
     mlAdvance(&ml0, &fieldFence);
-    if (p2sw_read())
+    if (!sw1down)
       redrawScreen = 1;
     count = 0;
   }

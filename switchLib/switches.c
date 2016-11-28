@@ -21,7 +21,7 @@ void sw_init()			/* setup switch */
 
 void sw_itr_han()
 {
-  update_switch();
+  update_sw();
   sw1down = !( swval & 1 );
   sw2down = !( swval & 2 );
   sw3down = !( swval & 4 );

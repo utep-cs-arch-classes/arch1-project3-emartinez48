@@ -8,6 +8,7 @@ all:
 	(cd randLib; make install)
 	(cd soundLib; make install)
 	(cd extraLib; make install)
+	(cd video-game; make)
 	# (cd p2sw-demo; make)
 	# (cd shape-motion-demo; make)
 
@@ -22,6 +23,7 @@ clean:
 	(cd randLib; make clean)
 	(cd soundLib; make clean)
 	(cd extraLib; make clean)
+	(cd video-game; make clean)
 	# (cd p2swLib; make clean)
 	# (cd p2sw-demo; make clean)
 	# (cd shape-motion-demo; make clean)

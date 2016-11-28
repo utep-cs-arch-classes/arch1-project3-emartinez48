@@ -5,13 +5,13 @@
 	.section	__interrupt_vector_11,"ax",@progbits
 	.word	WDT
 	.text
-
+	
 
 	.extern redrawScreen
 	.extern wdt_c_handler
 WDT:
 ; start of function
-; attributes: interrupt
+; attributes: interrupt 
 ; framesize_regs:     24
 ; framesize_locals:   0
 ; framesize_outgoing: 0
@@ -50,7 +50,7 @@ WDT:
 	cmp	#0, &redrawScreen
 	jz	ball_no_move
 	and	#0xffef, 0(r1)	; clear CPU off in saved SR
-ball_no_move:
+ball_no_move:	
 	RETI
 	.size	WDT, .-WDT
 	.local	count
