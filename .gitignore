@@ -4,3 +4,6 @@ lib/*
 h/*
 circleLib/*
 *.a
+p2swLib/*
+shape-motion-demo/*
+p2sw-demo/*
