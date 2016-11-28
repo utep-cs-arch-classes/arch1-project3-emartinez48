@@ -3,3 +3,4 @@
 lib/*
 h/*
 circleLib/*
+*.a

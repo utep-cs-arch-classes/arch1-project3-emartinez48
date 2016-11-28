@@ -1,20 +1,32 @@
 #include <msp430.h>
 
-unsigned int seed = 0;
+unsigned int seed;
 
+/**
+ * Recieve back a random number
+ * @return random number
+ */
 unsigned int random() {
   seed ^= (seed << 13);
   seed ^= (seed >> 9);
   return seed ^= (seed << 7);
 }
 
+/**
+ * add to the random seed to mix it up, maybe add the switched pushed?
+ * @param input some unsigned int number to add to the seed
+ */
 void random_add(unsigned int input) {
   seed += input;
 }
 
+/**
+ * TI instruments impltemented random bit generator using the aux clock
+ * @return random bits from aux clock
+ */
 unsigned int random_Gen() {
 	int i, j;
-	unsigned int result = 0;
+	seed = 0;
 
 	/* Save state */
 	unsigned int BCSCTL3_old = BCSCTL3;
@@ -42,10 +54,10 @@ unsigned int random_Gen() {
 				ones++;
 		}
 
-		result >>= 1;                         // Save previous bits
+		seed >>= 1;                         // Save previous bits
 
 		if (ones >= 3)                        // Best out of 5
-			result |= 0x8000;                 // Set MSb
+			seed |= 0x8000;                 // Set MSb
 	}
 
 	/* Restore state */
@@ -53,12 +65,12 @@ unsigned int random_Gen() {
 	TACCTL0 = TACCTL0_old;
 	TACTL = TACTL_old;
 
-	return result;
+	return seed;
 }
 
 /**
- * Sets up the library's variables to 0 and sets up the psuedo random array of random bits from the ALCK clock
+ * Sets up the library
  */
 void rand_init() {
-  seed = random_Gen();
+  random_Gen();
 }
