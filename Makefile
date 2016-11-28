@@ -6,6 +6,7 @@ all:
 	# (cd p2swLib; make install)
 	(cd switchLib; make install)
 	(cd randLib; make install)
+	(cd extraLib; make install)
 	# (cd p2sw-demo; make)
 	# (cd shape-motion-demo; make)
 
@@ -18,6 +19,7 @@ clean:
 	(cd shapeLib; make clean)
 	(cd switchLib; make clean)
 	(cd randLib; make clean)
+	(cd extraLib; make clean)
 	# (cd p2swLib; make clean)
 	# (cd p2sw-demo; make clean)
 	# (cd shape-motion-demo; make clean)
