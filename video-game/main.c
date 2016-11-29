@@ -62,7 +62,7 @@ typedef struct MovLayer_s {
 } MovLayer;
 
 /* initial value of {0,0} will be overwritten */
-MovLayer ml0 = { &layer0, {2,1}, 0 };
+MovLayer ml0 = { &layer0, {0,0}, 0 };
 
 
 
@@ -88,20 +88,19 @@ movLayerDraw(MovLayer *movLayers, Layer *layers)
     Region bounds;
     layerGetBounds(movLayer->layer, &bounds);
     lcd_setArea(bounds.topLeft.axes[0], bounds.topLeft.axes[1],
-		bounds.botRight.axes[0], bounds.botRight.axes[1]);
+    bounds.botRight.axes[0], bounds.botRight.axes[1]);
     for (row = bounds.topLeft.axes[1]; row <= bounds.botRight.axes[1]; row++) {
       for (col = bounds.topLeft.axes[0]; col <= bounds.botRight.axes[0]; col++) {
-	Vec2 pixelPos = {col, row};
-	u_int color = bgColor;
-	Layer *probeLayer;
-	for (probeLayer = layers; probeLayer;
-	     probeLayer = probeLayer->next) { /* probe all layers, in order */
-	  if (abShapeCheck(probeLayer->abShape, &probeLayer->pos, &pixelPos)) {
-	    color = probeLayer->color;
-	    break;
-	  } /* if probe check */
-	} // for checking all layers at col, row
-	lcd_writeColor(color);
+        Vec2 pixelPos = {col, row};
+        u_int color = bgColor;
+        Layer *probeLayer;
+        for (probeLayer = layers; probeLayer; probeLayer = probeLayer->next) { /* probe all layers, in order */
+          if (abShapeCheck(probeLayer->abShape, &probeLayer->pos, &pixelPos)) {
+            color = probeLayer->color;
+            break;
+          } /* if probe check */
+        } // for checking all layers at col, row
+        lcd_writeColor(color);
       } // for col
     } // for row
   } // for moving layer being updated
@@ -125,10 +124,9 @@ void mlAdvance(MovLayer *ml, Region *fence)
     vec2Add(&newPos, &ml->layer->posNext, &ml->velocity);
     abShapeGetBounds(ml->layer->abShape, &newPos, &shapeBoundary);
     for (axis = 0; axis < 2; axis ++) {
-      if ((shapeBoundary.topLeft.axes[axis] < fence->topLeft.axes[axis]) ||
-	  (shapeBoundary.botRight.axes[axis] > fence->botRight.axes[axis]) ) {
-	int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
-	newPos.axes[axis] += (2*velocity);
+      if ((shapeBoundary.topLeft.axes[axis] < fence->topLeft.axes[axis]) || (shapeBoundary.botRight.axes[axis] > fence->botRight.axes[axis]) ) {
+        int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
+        newPos.axes[axis] += (2*velocity);
       }	/**< if outside of fence */
     } /**< for axis */
     ml->layer->posNext = newPos;
@@ -185,9 +183,26 @@ void wdt_c_handler()
   P1OUT |= GREEN_LED;		      /**< Green LED on when cpu on */
   count ++;
   if (count == 15) {
+    redrawScreen = 1;
+
+    if(sw1down)
+      (&ml0)->velocity.axes[1] = -1;
+    else if(sw2down)
+      (&ml0)->velocity.axes[1] = 1;
+    else
+      (&ml0)->velocity.axes[1] = 0;
+
+    if(sw3down)
+      (&ml0)->velocity.axes[0] = -1;
+    else if(sw4down)
+      (&ml0)->velocity.axes[0] = 1;
+    else
+      (&ml0)->velocity.axes[0] = 0;
+
+
     mlAdvance(&ml0, &fieldFence);
-    if (!sw1down)
-      redrawScreen = 1;
+    // if (!sw1down)
+    //   redrawScreen = 1;
     count = 0;
   }
   P1OUT &= ~GREEN_LED;		    /**< Green LED off when cpu off */
