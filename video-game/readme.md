@@ -15,18 +15,16 @@ This Game's object is to survive, you need to move your square around to doge th
   - s3 moves left
   - s4 moves right
 
-## Project
-
-### folders
-####switchLib
+## Project folders
+###switchLib
   - contains my p2 switch library
-####soundLib
+###soundLib
   - contains my buzzer sound library
-####randLib
+###randLib
   - contains my random library
-####extraLib
+###extraLib
   - contains the iota implementation
-####video-game
+###video-game
   - contains the main contents of the game
 
   - file main.c contains the game and all its contents
