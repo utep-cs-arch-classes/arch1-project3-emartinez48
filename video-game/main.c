@@ -19,20 +19,42 @@
 #define GREEN_LED BIT6
 
 
-AbRect rect10 = {abRectGetBounds, abRectCheck, {10,10}}; /**< 10x10 rectangle */
+AbRect rect10 = {abRectGetBounds, abRectCheck, {5,5}}; /**< 10x10 rectangle */
+AbRect rect3 = {abRectGetBounds, abRectCheck, {3,3}}; /**< 10x10 rectangle */
 AbRArrow rightArrow = {abRArrowGetBounds, abRArrowCheck, 30};
+
+AbRectOutline topOutline = {	/* playing field */
+  abRectOutlineGetBounds, abRectOutlineCheck,
+  {screenWidth/2 - 10, screenHeight/2}
+};
 
 AbRectOutline fieldOutline = {	/* playing field */
   abRectOutlineGetBounds, abRectOutlineCheck,
   {screenWidth/2 - 10, screenHeight/2 - 10}
 };
 
-Layer layer4 = {
-  (AbShape *)&rightArrow,
-  {(screenWidth/2)+10, (screenHeight/2)+5}, /**< bit below & right of center */
+Layer topFenceLayer = {		/* playing field as a layer */
+  (AbShape *) &topOutline,
+  {screenWidth/2, screenHeight/2},/**< center */
+  {0,0}, {0,0},				    /* last & next pos */
+  COLOR_BLACK,
+  0
+};
+
+Layer rightLazer = {
+  (AbShape *)&rect3,
+  {(screenWidth-5), (screenHeight/2)}, /**< bit below & right of center */
   {0,0}, {0,0},				    /* last & next pos */
   COLOR_PINK,
-  0
+  &topFenceLayer
+};
+
+Layer topLazer = {
+  (AbShape *)&rect3,
+  {(screenWidth/2), (5)}, /**< bit below & right of center */
+  {0,0}, {0,0},				    /* last & next pos */
+  COLOR_PINK,
+  &rightLazer
 };
 
 Layer fieldLayer = {		/* playing field as a layer */
@@ -40,7 +62,7 @@ Layer fieldLayer = {		/* playing field as a layer */
   {screenWidth/2, screenHeight/2},/**< center */
   {0,0}, {0,0},				    /* last & next pos */
   COLOR_BLACK,
-  &layer4
+  &topLazer
 };
 
 Layer layer0 = {		/**< Layer with a red square */
@@ -61,8 +83,15 @@ typedef struct MovLayer_s {
   struct MovLayer_s *next;
 } MovLayer;
 
+/*
+  Top Arrow
+ */
+MovLayer m1lazer = { &rightLazer, {0,1}, 0 };
+MovLayer mlazer = { &topLazer, {1,0}, &m1lazer };
+
 /* initial value of {0,0} will be overwritten */
-MovLayer ml0 = { &layer0, {0,0}, 0 };
+MovLayer ml0 = { &layer0, {0,0}, &mlazer };
+
 
 
 
@@ -123,21 +152,70 @@ void mlAdvance(MovLayer *ml, Region *fence)
   for (; ml; ml = ml->next) {
     vec2Add(&newPos, &ml->layer->posNext, &ml->velocity);
     abShapeGetBounds(ml->layer->abShape, &newPos, &shapeBoundary);
-    for (axis = 0; axis < 2; axis ++) {
-      if ((shapeBoundary.topLeft.axes[axis] < fence->topLeft.axes[axis]) || (shapeBoundary.botRight.axes[axis] > fence->botRight.axes[axis]) ) {
-        int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
-        newPos.axes[axis] += (2*velocity);
-      }	/**< if outside of fence */
-    } /**< for axis */
+
+    //check axes[0]
+    if(shapeBoundary.topLeft.axes[0] < fence->topLeft.axes[0]) {
+      newPos.axes[0] += (fence->topLeft.axes[0] - shapeBoundary.topLeft.axes[0]);
+      ml->velocity.axes[0] = -ml->velocity.axes[0];
+    } else if(shapeBoundary.botRight.axes[0] > fence->botRight.axes[0]) {
+      newPos.axes[0] -= (shapeBoundary.botRight.axes[0] - fence->botRight.axes[0]);
+      ml->velocity.axes[0] = -ml->velocity.axes[0];
+    }
+
+    if(shapeBoundary.topLeft.axes[1] < fence->topLeft.axes[1]) {
+      newPos.axes[1] += (fence->topLeft.axes[1] - shapeBoundary.topLeft.axes[1]);
+      ml->velocity.axes[1] = -ml->velocity.axes[1];
+    } else if(shapeBoundary.botRight.axes[1] > fence->botRight.axes[1]) {
+      newPos.axes[1] -= (shapeBoundary.botRight.axes[1] - fence->botRight.axes[1]);
+      ml->velocity.axes[1] = -ml->velocity.axes[1];
+    }
+
+
+
+
+    //check axes[1]
+    // if(shapeBoundary.topLeft.axes[1] < fence->topLeft.axes[1])
+    //   newPos.axes[1] += (fence->topLeft.axes[1] - shapeBoundary.topLeft.axes[1]);
+    // else if(shapeBoundary.topLeft.axes[1] > fence->topLeft.axes[1])
+    //   newPos.axes[1] -= (shapeBoundary.topLeft.axes[1] - fence->topLeft.axes[1]);
+
+    // for (axis = 0; axis < 2; axis ++) {
+    //   if( )
+    //   if ((shapeBoundary.topLeft.axes[axis] < fence->topLeft.axes[axis]) || (shapeBoundary.botRight.axes[axis] > fence->botRight.axes[axis]) ) {
+    //     int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
+    //     newPos.axes[axis] += (2*velocity);
+    //   }	/**< if outside of fence */
+    // } /**< for axis */
     ml->layer->posNext = newPos;
   } /**< for ml */
 }
+
+
 
 
 u_int bgColor = COLOR_BLUE;     /**< The background color */
 int redrawScreen = 1;           /**< Boolean for whether screen needs to be redrawn */
 
 Region fieldFence;		/**< fence around playing field  */
+Region topFence;
+
+
+
+
+
+
+
+
+
+
+
+
+
+u_int topCount = 0;
+u_int rightCount = 0;
+u_int topCount_half = 0;
+u_int rightCount_half = 0;
+
 
 
 /** Initializes everything, enables interrupts and green LED,
@@ -159,7 +237,14 @@ void main()
 
 
   layerGetBounds(&fieldLayer, &fieldFence);
+  layerGetBounds(&topFenceLayer, &topFence);
 
+  topCount = random() % 6 + 1;
+  topCount *= 250;
+  topCount_half = topCount/2;
+  rightCount = random() % 6 + 1;
+  rightCount *= 250;
+  rightCount_half = rightCount/2;
 
   enableWDTInterrupts();      /**< enable periodic interrupt */
   or_sr(0x8);	              /**< GIE (enable interrupts) */
@@ -182,25 +267,45 @@ void wdt_c_handler()
   static short count = 0;
   P1OUT |= GREEN_LED;		      /**< Green LED on when cpu on */
   count ++;
-  if (count == 15) {
+  if( topCount > 0)
+    topCount -= 1;
+  if(topCount >= topCount_half) {
+    (&topLazer)->color = COLOR_WHITE;
+  } else if(topCount < topCount_half && topCount >= topCount_half/2) {
+    (&topLazer)->color = COLOR_YELLOW;
+  } else if(topCount < topCount_half/2) {
+    (&topLazer)->color = COLOR_RED;
+    (&mlazer)->velocity.axes[0] = 0;
+    (&mlazer)->velocity.axes[1] = 0;
+  }
+
+  if (count == 10) {
     redrawScreen = 1;
 
+    char buffer [33];
+    itoa (topCount,buffer);
+    buffer[32] = '\0';
+
+
+    drawString5x7(0,0, buffer, COLOR_GREEN, COLOR_RED);
+
     if(sw1down)
-      (&ml0)->velocity.axes[1] = -1;
+      (&ml0)->velocity.axes[1] = -5;
     else if(sw2down)
-      (&ml0)->velocity.axes[1] = 1;
+      (&ml0)->velocity.axes[1] = 5;
     else
       (&ml0)->velocity.axes[1] = 0;
 
     if(sw3down)
-      (&ml0)->velocity.axes[0] = -1;
+      (&ml0)->velocity.axes[0] = -5;
     else if(sw4down)
-      (&ml0)->velocity.axes[0] = 1;
+      (&ml0)->velocity.axes[0] = 5;
     else
       (&ml0)->velocity.axes[0] = 0;
 
 
     mlAdvance(&ml0, &fieldFence);
+    // mlAdvance(&mlazer, &topFence);
     // if (!sw1down)
     //   redrawScreen = 1;
     count = 0;
