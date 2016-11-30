@@ -396,6 +396,7 @@ void wdt_c_handler()
     char buffer [33];
     itoa (score,buffer);
 
+    drawString5x7(0,0, "___\0", COLOR_GREEN, COLOR_BLUE);
     drawString5x7(0,0, buffer, COLOR_GREEN, COLOR_BLUE);
     wipe(buffer,33);
 
