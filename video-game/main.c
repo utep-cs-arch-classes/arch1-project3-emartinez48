@@ -19,7 +19,9 @@
 
 #define GREEN_LED BIT6
 unsigned long score = 0;
-unsigned int health = 500;
+unsigned int health = 200;
+unsigned int reset_countdown = 250*3;
+unsigned long top_score = 0;
 
 AbRect rect10 = {abRectGetBounds, abRectCheck, {5,5}}; /**< 10x10 rectangle */
 AbRect rect3 = {abRectGetBounds, abRectCheck, {3,3}}; /**< 10x10 rectangle */
@@ -127,20 +129,21 @@ MovLayer ml0 = { &layer0, {0,0}, &mlazer };
 
 
 //
-typedef struct killers_s {
-  MovLayer *mov;
-  int timer;
-  int halfTimer;
-  int forthTimer;
-  char killMode;
-  struct killers_s *next;
-} killer;
-
-// killer c = { &clazer, 0,0,0,0, 0};
-killer b = { &blazer, 0,0,0,0, 0};
-killer a = { &alazer, 0,0,0,0, &b};
-killer r = { &m1lazer, 0,0,0,0, &a};
-killer t = { &mlazer, 0,0,0,0, &r};
+// typedef struct killers_s {
+//   MovLayer *mov;
+//   int timer;
+//   int halfTimer;
+//   int forthTimer;
+//   char killMode;
+//   struct killers_s *next;
+// } killer;
+//
+// // killer c = { &clazer, 0,0,0,0, 0};
+// killer b = { &blazer, 0,0,0,0, 0};
+// killer a = { &alazer, 0,0,0,0, &b};
+// killer r = { &m1lazer, 0,0,0,0, &a};
+// killer t = { &mlazer, 0,0,0,0, &r};
+//
 
 // from https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
 void checkCollision() {
@@ -175,28 +178,9 @@ void checkCollision() {
         newPos.axes[axis] += (2*velocity);
       } /**< for axis */
       ml->layer->posNext = newPos;
-      health -= 1;
+      health -= 1 * score/3 + 1;
     }
   }
-  //
-  //   // if (shapeBoundary.topLeft.axes[0] < shapeBoundary2.botRight.axes[0] &&
-  //   //  shapeBoundary.botRight.axes[0] > shapeBoundary2.topLeft.axes[0] &&
-  //   //  shapeBoundary.topLeft.axes[1] < shapeBoundary2.botRight.axes[1] &&
-  //   //  shapeBoundary.botRight.axes[1] > shapeBoundary2.topLeft.axes[1]) {
-  //   // if( shapeBoundary.botRight.axes[0] >= shapeBoundary2.topLeft.axes[0] &&
-  //   //   shapeBoundary.topLeft.axes[0] <= shapeBoundary2.botRight.axes[0] &&
-  //   //   shapeBoundary.botRight.axes[1] >= shapeBoundary2.topLeft.axes[1] &&
-  //   //   shapeBoundary.topLeft.axes[1] <= shapeBoundary2.botRight.axes[1]) {
-  //     if( !(aX<bx || bX<ax || aY<by || bY<ay)) {
-  //     char axis = 0;
-      // for ( axis = 0; axis < 2; axis ++) {
-      //   int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
-      //   newPos.axes[axis] += (2*velocity);
-      // } /**< for axis */
-  // }
-  //
-  //   ml->layer->posNext = newPos;
-  // }
 }
 
 void movLayerDraw(MovLayer *movLayers, Layer *layers)
@@ -350,11 +334,52 @@ void wdt_c_handler()
   static short count = 0;
   P1OUT |= GREEN_LED;		      /**< Green LED on when cpu on */
   count ++;
+
+  if( health > 200 || health <= 0 ) {
+
+    // you lose
+    // reset game
+    if (score > top_score)
+      top_score = score;
+    // score = 0;
+    // health = 200;
+    if( reset_countdown > 0 ) {
+      reset_countdown -= 1;
+      drawString5x7(0,50, "YOU LOSE", COLOR_GREEN, COLOR_RED);
+      drawString5x7(0,60, "SCORE: ", COLOR_GREEN, COLOR_RED);
+      char buffer [33];
+      itoa (score,buffer);
+
+      drawString5x7(screenWidth/2,60, buffer, COLOR_GREEN, COLOR_RED);
+      drawString5x7(0,90, "PREPARE FOR RESET", COLOR_GREEN, COLOR_RED);
+
+      P1OUT &= ~GREEN_LED;		    /**< Green LED off when cpu off */
+      return;
+    }
+  }
+
   if( count == 250 ) {
     count = 0;
     score += 1;
   }
-  if (count %10 == 0) {
+
+  if( health > 200 || health <= 0 ) {
+    // you lose
+    // reset game
+    if (score > top_score)
+      top_score = score;
+    // score = 0;
+    // health = 200;
+    drawString5x7(0,50, "YOU LOSE PREPARE", COLOR_GREEN, COLOR_RED);
+    drawString5x7(0,60, "FOR RESET", COLOR_GREEN, COLOR_RED);
+    drawString5x7(0,70, "SCORE:", COLOR_GREEN, COLOR_RED);
+    char buffer [33];
+    itoa (score,buffer);
+
+    drawString5x7(0,90, buffer, COLOR_GREEN, COLOR_RED);
+  }
+
+  if (count %20 == 0) {
     redrawScreen = 1;
 
     char buffer [33];
@@ -364,7 +389,13 @@ void wdt_c_handler()
     wipe(buffer,33);
 
     itoa(health,buffer);
+    drawString5x7(0,screenHeight-7, "___\0", COLOR_GREEN, COLOR_RED);
     drawString5x7(0,screenHeight-7, buffer, COLOR_GREEN, COLOR_RED);
+
+    wipe(buffer,33);
+    itoa(top_score,buffer);
+    drawString5x7(screenWidth-5*5,screenHeight-7, buffer, COLOR_GREEN, COLOR_RED);
+
     // drawString5x7(20,20, "Health\0", COLOR_GREEN, COLOR_RED);
 
     if(sw1down)
