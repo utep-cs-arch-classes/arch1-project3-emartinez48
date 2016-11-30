@@ -342,6 +342,7 @@ void wdt_c_handler()
 
 
   if( health > 200 || health <= 0 ) {
+    buzzer_set_period(1000);
     if( reset_countdown > 0 ) {
       reset_countdown -= 1;
     }
@@ -365,6 +366,9 @@ void wdt_c_handler()
 
       P1OUT &= ~GREEN_LED;		    /**< Green LED off when cpu off */
     } else if( reset_countdown == 0 ) {
+
+
+
       health = 200;
       ml0.layer->pos.axes[0] = random() % screenWidth;
       ml0.layer->pos.axes[1] = random() % screenHeight;
@@ -376,6 +380,7 @@ void wdt_c_handler()
       drawString5x7(0,90, "PREPARE FOR RESET", COLOR_BLUE, COLOR_BLUE);
       score = 0;
       count = 0;
+      buzzer_set_period(0);
     }
     return;
   }
@@ -383,12 +388,6 @@ void wdt_c_handler()
   if( count == 250 ) {
     count = 0;
     score += 1;
-  }
-
-  if( buzzer_on && buzzer_current_count < 5)
-    buzzer_current_count += 1;
-  else if( buzzer_on && buzzer_current_count >= 5 ) {
-    buzzer_init();
   }
 
   if (count %20 == 0) {
