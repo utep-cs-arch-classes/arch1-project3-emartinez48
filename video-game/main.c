@@ -18,7 +18,8 @@
 #include "switches.h"
 
 #define GREEN_LED BIT6
-
+unsigned long score = 0;
+unsigned int health = 100;
 
 AbRect rect10 = {abRectGetBounds, abRectCheck, {5,5}}; /**< 10x10 rectangle */
 AbRect rect3 = {abRectGetBounds, abRectCheck, {3,3}}; /**< 10x10 rectangle */
@@ -29,36 +30,20 @@ AbRectOutline fieldOutline = {	/* playing field */
   {screenWidth/2 - 10, screenHeight/2 - 10}
 };
 
-Layer eLazer = {
-  (AbShape *)&rect3,
-  {(screenWidth-5), (screenHeight/2)}, /**< bit below & right of center */
-  {0,0}, {0,0},				    /* last & next pos */
-  COLOR_WHITE,
-  0
-};
-
-Layer dLazer = {
-  (AbShape *)&rect3,
-  {(screenWidth-5), (screenHeight/2)}, /**< bit below & right of center */
-  {0,0}, {0,0},				    /* last & next pos */
-  COLOR_WHITE,
-  &eLazer
-};
-
-Layer cLazer = {
-  (AbShape *)&rect3,
-  {(screenWidth-5), (screenHeight/2)}, /**< bit below & right of center */
-  {0,0}, {0,0},				    /* last & next pos */
-  COLOR_WHITE,
-  &dLazer
-};
+// Layer cLazer = {
+//   (AbShape *)&rect3,
+//   {(screenWidth-5), (screenHeight/2)}, /**< bit below & right of center */
+//   {0,0}, {0,0},				    /* last & next pos */
+//   COLOR_WHITE,
+//   0
+// };
 
 Layer bLazer = {
   (AbShape *)&rect3,
   {(screenWidth-5), (screenHeight/2)}, /**< bit below & right of center */
   {0,0}, {0,0},				    /* last & next pos */
   COLOR_WHITE,
-  &cLazer
+  0
 };
 
 Layer aLazer = {
@@ -115,11 +100,9 @@ typedef struct MovLayer_s {
   Top Arrow
   topBeam
  */
-MovLayer elazer = { &eLazer, {0,1}, 0 };
-MovLayer dlazer = { &dLazer, {0,1}, 0 };
-MovLayer clazer = { &cLazer, {0,1}, 0 };
-MovLayer blazer = { &bLazer, {0,1}, 0 };
-MovLayer alazer = { &aLazer, {2,1}, 0 };
+// MovLayer clazer = { &cLazer, {0,1}, 0 };
+MovLayer blazer = { &bLazer, {1,2}, 0 };
+MovLayer alazer = { &aLazer, {2,1}, &blazer };
 MovLayer m1lazer = { &rightLazer, {0,1}, &alazer };
 MovLayer mlazer = { &topLazer, {1,1}, &m1lazer };
 
@@ -153,56 +136,68 @@ typedef struct killers_s {
   struct killers_s *next;
 } killer;
 
-// killer e = { &elazer, 0,0,0,0, 0};
-// killer d = { &dlazer, 0,0,0,0, 0};
 // killer c = { &clazer, 0,0,0,0, 0};
-// killer b = { &blazer, 0,0,0,0, 0};
-// killer a = { &alazer, 0,0,0,0, 0};
-// killer r = { &m1lazer, 0,0,0,0, &a};
-// killer t = { &mlazer, 0,0,0,0, &r};
-// void movLayerAdd(MovLayer *ml, MovLayer *new) {
-//   if( ml->next != 0 )
-//     movLayerAdd(ml->next, new);
-//   else {
-//     ml->next = new;
-//     return;
-//   }
-// }
-// void kLayerAdd(killer *ml, killer *new) {
-//   for( ; ml->next != 0; ml = ml->next ){}
-//   ml->next = new;
-// }
-// void addKiller() {
-//   Layer *temp = (Layer *) malloc( sizeof(Layer) );
-//   temp->abShape = (AbShape *)&rect3;
-//   temp->pos.axes[0] = (screenWidth/2 + (random() % (screenWidth) - screenWidth/2));
-//   temp->pos.axes[1] = (screenHeight/2 + (random() % (screenHeight) - screenHeight/2));
-//   temp->posLast.axes[0] = temp->pos.axes[0];
-//   temp->posLast.axes[1] = temp->pos.axes[1];
-//   temp->posNext.axes[0] = 0;
-//   temp->posNext.axes[1] = 0;
-//   temp->color = COLOR_WHITE;
-//   temp->next = 0;
-//   MovLayer *temp_ml = (MovLayer *) malloc( sizeof(MovLayer) );
-//
-//   temp_ml->layer = temp;
-//   temp_ml->velocity.axes[0] = random() % 6 + 1;
-//   temp_ml->velocity.axes[1] = random() % 6 + 1;
-//   temp_ml->next = 0;
-//
-//   killer *temp_k = (killer *) malloc( sizeof(killer) );
-//
-//   movLayerAdd(&ml0,temp_ml);
-//   temp_k->mov = temp_ml;
-//   temp_k->timer = ((random() % 10) + 1) * 250;
-//   temp_k->halfTimer = temp_k->timer /2;
-//   temp_k->forthTimer = temp_k->halfTimer /2;
-//   temp_k->killMode = 0;
-//   temp_k->next = 0;
-//
-//   // initKiller(temp_k, temp_ml);
-//   // kLayerAdd(&a,temp_k);
-// }
+killer b = { &blazer, 0,0,0,0, 0};
+killer a = { &alazer, 0,0,0,0, &b};
+killer r = { &m1lazer, 0,0,0,0, &a};
+killer t = { &mlazer, 0,0,0,0, &r};
+
+// from https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
+void checkCollision() {
+  return;
+  Vec2 newPos;
+  Region shapeBoundary;
+  Region shapeBoundary2;
+  MovLayer *ml = &mlazer;
+
+  int ax = 0;
+  int ay = 0;
+  int aX = 0;
+  int aY = 0;
+
+  int bx = ml0.layer->pos.axes[0] - 10;
+  int by = ml0.layer->pos.axes[1] - 10;
+  int bX = ml0.layer->pos.axes[0] + 10;
+  int bY = ml0.layer->pos.axes[1] + 10;
+
+  char buffer [33];
+  buffer[32] = '\0';
+
+  itoa (bx,buffer);
+  drawString5x7(0,20, buffer, COLOR_GREEN, COLOR_BLUE);
+  itoa (by,buffer);
+  drawString5x7(0,20, buffer, COLOR_GREEN, COLOR_BLUE);
+  itoa (bX,buffer);
+  drawString5x7(0,20, buffer, COLOR_GREEN, COLOR_BLUE);
+  itoa (bY,buffer);
+  drawString5x7(0,20, buffer, COLOR_GREEN, COLOR_BLUE);
+
+  for (; ml; ml = ml->next) {
+    vec2Add(&newPos, &ml->layer->posNext, &ml->velocity);
+    ax = ml->layer->posNext.axes[0] - 3;
+    ay = ml->layer->posNext.axes[1] - 3;
+    aX = ml->layer->posNext.axes[0] + 3;
+    aY = ml->layer->posNext.axes[1] + 3;
+
+    // if (shapeBoundary.topLeft.axes[0] < shapeBoundary2.botRight.axes[0] &&
+    //  shapeBoundary.botRight.axes[0] > shapeBoundary2.topLeft.axes[0] &&
+    //  shapeBoundary.topLeft.axes[1] < shapeBoundary2.botRight.axes[1] &&
+    //  shapeBoundary.botRight.axes[1] > shapeBoundary2.topLeft.axes[1]) {
+    // if( shapeBoundary.botRight.axes[0] >= shapeBoundary2.topLeft.axes[0] &&
+    //   shapeBoundary.topLeft.axes[0] <= shapeBoundary2.botRight.axes[0] &&
+    //   shapeBoundary.botRight.axes[1] >= shapeBoundary2.topLeft.axes[1] &&
+    //   shapeBoundary.topLeft.axes[1] <= shapeBoundary2.botRight.axes[1]) {
+      if( !(aX<bx || bX<ax || aY<by || bY<ay)) {
+      char axis = 0;
+      for ( axis = 0; axis < 2; axis ++) {
+        int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
+        newPos.axes[axis] += (2*velocity);
+      } /**< for axis */
+  }
+
+    ml->layer->posNext = newPos;
+  }
+}
 
 void movLayerDraw(MovLayer *movLayers, Layer *layers)
 {
@@ -252,7 +247,6 @@ void movLayerDraw(MovLayer *movLayers, Layer *layers)
 void mlAdvance(MovLayer *ml, Region *fence)
 {
   Vec2 newPos;
-  u_char axis;
   Region shapeBoundary;
   for (; ml; ml = ml->next) {
     vec2Add(&newPos, &ml->layer->posNext, &ml->velocity);
@@ -284,13 +278,7 @@ void mlAdvance(MovLayer *ml, Region *fence)
     // else if(shapeBoundary.topLeft.axes[1] > fence->topLeft.axes[1])
     //   newPos.axes[1] -= (shapeBoundary.topLeft.axes[1] - fence->topLeft.axes[1]);
 
-    // for (axis = 0; axis < 2; axis ++) {
-    //   if( )
-    //   if ((shapeBoundary.topLeft.axes[axis] < fence->topLeft.axes[axis]) || (shapeBoundary.botRight.axes[axis] > fence->botRight.axes[axis]) ) {
-    //     int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
-    //     newPos.axes[axis] += (2*velocity);
-    //   }	/**< if outside of fence */
-    // } /**< for axis */
+
     ml->layer->posNext = newPos;
   } /**< for ml */
 }
@@ -355,7 +343,6 @@ void main()
     movLayerDraw(&ml0, &layer0);
   }
 }
-unsigned long score = 0;
 
 /** Watchdog timer interrupt handler. 15 interrupts/sec */
 void wdt_c_handler()
@@ -374,7 +361,9 @@ void wdt_c_handler()
     itoa (score,buffer);
     buffer[32] = '\0';
 
-    drawString5x7(0,0, buffer, COLOR_GREEN, COLOR_RED);
+    drawString5x7(0,0, buffer, COLOR_GREEN, COLOR_BLUE);
+    drawString5x7(0,screenHeight-7, "Health\0", COLOR_GREEN, COLOR_RED);
+    // drawString5x7(20,20, "Health\0", COLOR_GREEN, COLOR_RED);
 
     if(sw1down)
       (&ml0)->velocity.axes[1] = -5;
@@ -391,6 +380,7 @@ void wdt_c_handler()
       (&ml0)->velocity.axes[0] = 0;
 
 
+    checkCollision();
     mlAdvance(&ml0, &fieldFence);
     // mlAdvance(&mlazer, &topFence);
     // if (!sw1down)
