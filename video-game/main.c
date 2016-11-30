@@ -153,13 +153,13 @@ typedef struct killers_s {
   struct killers_s *next;
 } killer;
 
-killer e = { &elazer, 0,0,0,0, 0};
-killer d = { &dlazer, 0,0,0,0, 0};
-killer c = { &clazer, 0,0,0,0, 0};
-killer b = { &blazer, 0,0,0,0, 0};
-killer a = { &alazer, 0,0,0,0, 0};
-killer r = { &m1lazer, 0,0,0,0, &a};
-killer t = { &mlazer, 0,0,0,0, &r};
+// killer e = { &elazer, 0,0,0,0, 0};
+// killer d = { &dlazer, 0,0,0,0, 0};
+// killer c = { &clazer, 0,0,0,0, 0};
+// killer b = { &blazer, 0,0,0,0, 0};
+// killer a = { &alazer, 0,0,0,0, 0};
+// killer r = { &m1lazer, 0,0,0,0, &a};
+// killer t = { &mlazer, 0,0,0,0, &r};
 // void movLayerAdd(MovLayer *ml, MovLayer *new) {
 //   if( ml->next != 0 )
 //     movLayerAdd(ml->next, new);
@@ -363,8 +363,11 @@ void wdt_c_handler()
   static short count = 0;
   P1OUT |= GREEN_LED;		      /**< Green LED on when cpu on */
   count ++;
-  if (count == 10) {
+  if( count == 250 ) {
     count = 0;
+    score += 1;
+  }
+  if (count %10 == 0) {
     redrawScreen = 1;
 
     char buffer [33];
