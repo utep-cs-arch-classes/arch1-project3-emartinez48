@@ -16,6 +16,12 @@ void reverse(char s[]) {
   }
 }
 
+void wipe(char s[], int len) {
+  int i;
+  for(i = 0; i < len; i++ )
+    s[i] = '\0';
+}
+
 /**
  * convert number to string from K&R book, largest number length == 6
  * @param  n number to convert to a string

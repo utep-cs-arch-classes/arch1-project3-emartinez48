@@ -144,7 +144,6 @@ killer t = { &mlazer, 0,0,0,0, &r};
 
 // from https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
 void checkCollision() {
-  return;
   Vec2 newPos;
   Region shapeBoundary;
   Region shapeBoundary2;
@@ -163,40 +162,39 @@ void checkCollision() {
   char buffer [33];
   buffer[32] = '\0';
 
-  itoa (bx,buffer);
-  drawString5x7(0,20, buffer, COLOR_GREEN, COLOR_BLUE);
-  itoa (by,buffer);
-  drawString5x7(0,20, buffer, COLOR_GREEN, COLOR_BLUE);
-  itoa (bX,buffer);
-  drawString5x7(0,20, buffer, COLOR_GREEN, COLOR_BLUE);
-  itoa (bY,buffer);
-  drawString5x7(0,20, buffer, COLOR_GREEN, COLOR_BLUE);
-
   for (; ml; ml = ml->next) {
     vec2Add(&newPos, &ml->layer->posNext, &ml->velocity);
-    ax = ml->layer->posNext.axes[0] - 3;
-    ay = ml->layer->posNext.axes[1] - 3;
-    aX = ml->layer->posNext.axes[0] + 3;
-    aY = ml->layer->posNext.axes[1] + 3;
-
-    // if (shapeBoundary.topLeft.axes[0] < shapeBoundary2.botRight.axes[0] &&
-    //  shapeBoundary.botRight.axes[0] > shapeBoundary2.topLeft.axes[0] &&
-    //  shapeBoundary.topLeft.axes[1] < shapeBoundary2.botRight.axes[1] &&
-    //  shapeBoundary.botRight.axes[1] > shapeBoundary2.topLeft.axes[1]) {
-    // if( shapeBoundary.botRight.axes[0] >= shapeBoundary2.topLeft.axes[0] &&
-    //   shapeBoundary.topLeft.axes[0] <= shapeBoundary2.botRight.axes[0] &&
-    //   shapeBoundary.botRight.axes[1] >= shapeBoundary2.topLeft.axes[1] &&
-    //   shapeBoundary.topLeft.axes[1] <= shapeBoundary2.botRight.axes[1]) {
-      if( !(aX<bx || bX<ax || aY<by || bY<ay)) {
-      char axis = 0;
+    ax = ml->layer->posNext.axes[0] - 2;
+    ay = ml->layer->posNext.axes[1] - 2;
+    aX = ml->layer->posNext.axes[0] + 2;
+    aY = ml->layer->posNext.axes[1] + 2;
+    if( !(aX<bx || bX<ax || aY<by || bY<ay)) {
+      char axis;
       for ( axis = 0; axis < 2; axis ++) {
         int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
         newPos.axes[axis] += (2*velocity);
       } /**< for axis */
+    }
   }
-
-    ml->layer->posNext = newPos;
-  }
+  //
+  //   // if (shapeBoundary.topLeft.axes[0] < shapeBoundary2.botRight.axes[0] &&
+  //   //  shapeBoundary.botRight.axes[0] > shapeBoundary2.topLeft.axes[0] &&
+  //   //  shapeBoundary.topLeft.axes[1] < shapeBoundary2.botRight.axes[1] &&
+  //   //  shapeBoundary.botRight.axes[1] > shapeBoundary2.topLeft.axes[1]) {
+  //   // if( shapeBoundary.botRight.axes[0] >= shapeBoundary2.topLeft.axes[0] &&
+  //   //   shapeBoundary.topLeft.axes[0] <= shapeBoundary2.botRight.axes[0] &&
+  //   //   shapeBoundary.botRight.axes[1] >= shapeBoundary2.topLeft.axes[1] &&
+  //   //   shapeBoundary.topLeft.axes[1] <= shapeBoundary2.botRight.axes[1]) {
+  //     if( !(aX<bx || bX<ax || aY<by || bY<ay)) {
+  //     char axis = 0;
+      // for ( axis = 0; axis < 2; axis ++) {
+      //   int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
+      //   newPos.axes[axis] += (2*velocity);
+      // } /**< for axis */
+  // }
+  //
+  //   ml->layer->posNext = newPos;
+  // }
 }
 
 void movLayerDraw(MovLayer *movLayers, Layer *layers)
