@@ -19,7 +19,7 @@
 
 #define GREEN_LED BIT6
 unsigned long score = 0;
-unsigned int health = 100;
+unsigned int health = 500;
 
 AbRect rect10 = {abRectGetBounds, abRectCheck, {5,5}}; /**< 10x10 rectangle */
 AbRect rect3 = {abRectGetBounds, abRectCheck, {3,3}}; /**< 10x10 rectangle */
@@ -174,6 +174,8 @@ void checkCollision() {
         int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
         newPos.axes[axis] += (2*velocity);
       } /**< for axis */
+      ml->layer->posNext = newPos;
+      health -= 1;
     }
   }
   //
@@ -357,10 +359,12 @@ void wdt_c_handler()
 
     char buffer [33];
     itoa (score,buffer);
-    buffer[32] = '\0';
 
     drawString5x7(0,0, buffer, COLOR_GREEN, COLOR_BLUE);
-    drawString5x7(0,screenHeight-7, "Health\0", COLOR_GREEN, COLOR_RED);
+    wipe(buffer,33);
+
+    itoa(health,buffer);
+    drawString5x7(0,screenHeight-7, buffer, COLOR_GREEN, COLOR_RED);
     // drawString5x7(20,20, "Health\0", COLOR_GREEN, COLOR_RED);
 
     if(sw1down)
