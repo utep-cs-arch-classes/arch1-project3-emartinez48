@@ -336,6 +336,9 @@ void wdt_c_handler()
   count ++;
 
   if( health > 200 || health <= 0 ) {
+    if( reset_countdown > 0 ) {
+      reset_countdown -= 1;
+    }
 
     // you lose
     // reset game
@@ -343,7 +346,8 @@ void wdt_c_handler()
       top_score = score;
     // score = 0;
     // health = 200;
-    if( reset_countdown > 0 ) {
+    if( reset_countdown > 100 ) {
+      redrawScreen = 0;
       reset_countdown -= 1;
       drawString5x7(0,50, "YOU LOSE", COLOR_GREEN, COLOR_RED);
       drawString5x7(0,60, "SCORE: ", COLOR_GREEN, COLOR_RED);
@@ -354,8 +358,14 @@ void wdt_c_handler()
       drawString5x7(0,90, "PREPARE FOR RESET", COLOR_GREEN, COLOR_RED);
 
       P1OUT &= ~GREEN_LED;		    /**< Green LED off when cpu off */
-      return;
+    } else if( reset_countdown > 99 ){
+      lcd_setArea(0, 0, screenWidth, screenHeight);
+      lcd_writeColor(COLOR_RED);
+    } else if( reset_countdown < 80 && reset_countdown > 79 ) {
+      lcd_setArea(0, 0, screenWidth, screenHeight);
+      lcd_writeColor(COLOR_BLUE);
     }
+    return;
   }
 
   if( count == 250 ) {
