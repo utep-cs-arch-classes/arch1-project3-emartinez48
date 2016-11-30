@@ -22,6 +22,7 @@ unsigned long score = 0;
 unsigned int health = 200;
 unsigned int reset_countdown = 250*3;
 unsigned long top_score = 0;
+int buzzer_current_count = 0;
 
 AbRect rect10 = {abRectGetBounds, abRectCheck, {5,5}}; /**< 10x10 rectangle */
 AbRect rect3 = {abRectGetBounds, abRectCheck, {3,3}}; /**< 10x10 rectangle */
@@ -179,6 +180,10 @@ void checkCollision() {
       } /**< for axis */
       ml->layer->posNext = newPos;
       health -= 1 * score/3 + 1;
+      if( !buzzer_on) {
+        buzzer_current_count = 0;
+        // sound(_B,2);
+      }
     }
   }
 }
@@ -335,6 +340,7 @@ void wdt_c_handler()
   P1OUT |= GREEN_LED;		      /**< Green LED on when cpu on */
   count ++;
 
+
   if( health > 200 || health <= 0 ) {
     if( reset_countdown > 0 ) {
       reset_countdown -= 1;
@@ -358,12 +364,18 @@ void wdt_c_handler()
       drawString5x7(0,90, "PREPARE FOR RESET", COLOR_GREEN, COLOR_RED);
 
       P1OUT &= ~GREEN_LED;		    /**< Green LED off when cpu off */
-    } else if( reset_countdown > 99 ){
-      lcd_setArea(0, 0, screenWidth, screenHeight);
-      lcd_writeColor(COLOR_RED);
-    } else if( reset_countdown < 80 && reset_countdown > 79 ) {
-      lcd_setArea(0, 0, screenWidth, screenHeight);
-      lcd_writeColor(COLOR_BLUE);
+    } else if( reset_countdown == 0 ) {
+      health = 200;
+      ml0.layer->pos.axes[0] = random() % screenWidth;
+      ml0.layer->pos.axes[1] = random() % screenHeight;
+      ml0.layer->posNext.axes[0] = ml0.layer->pos.axes[0];
+      ml0.layer->posNext.axes[1] = ml0.layer->pos.axes[1];
+      drawString5x7(0,50, "YOU LOSE", COLOR_BLUE, COLOR_BLUE);
+      drawString5x7(0,60, "SCORE: ", COLOR_BLUE, COLOR_BLUE);
+      drawString5x7(screenWidth/2,60, "000000", COLOR_BLUE, COLOR_BLUE);
+      drawString5x7(0,90, "PREPARE FOR RESET", COLOR_BLUE, COLOR_BLUE);
+      score = 0;
+      count = 0;
     }
     return;
   }
@@ -373,20 +385,10 @@ void wdt_c_handler()
     score += 1;
   }
 
-  if( health > 200 || health <= 0 ) {
-    // you lose
-    // reset game
-    if (score > top_score)
-      top_score = score;
-    // score = 0;
-    // health = 200;
-    drawString5x7(0,50, "YOU LOSE PREPARE", COLOR_GREEN, COLOR_RED);
-    drawString5x7(0,60, "FOR RESET", COLOR_GREEN, COLOR_RED);
-    drawString5x7(0,70, "SCORE:", COLOR_GREEN, COLOR_RED);
-    char buffer [33];
-    itoa (score,buffer);
-
-    drawString5x7(0,90, buffer, COLOR_GREEN, COLOR_RED);
+  if( buzzer_on && buzzer_current_count < 5)
+    buzzer_current_count += 1;
+  else if( buzzer_on && buzzer_current_count >= 5 ) {
+    buzzer_init();
   }
 
   if (count %20 == 0) {
